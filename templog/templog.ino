@@ -33,7 +33,7 @@ DHT dht(DHTPIN, DHTTYPE);
 File logFile;
 
 // Log interval in milliseconds (e.g., 5000 ms = 5 seconds)
-unsigned long logInterval = 30000;
+unsigned long logInterval = 1000*60*5; //5 minutes
 unsigned long lastLogTime = 0;
 
 void displayMessage(const char* message) {
