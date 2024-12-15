@@ -93,15 +93,18 @@ void setup() {
   Serial.println("SD card initialized.");
 
   // Log file setup
-  logFile = SD.open("/data_log.txt", FILE_APPEND);
-  if (!logFile) {
-    const char* error = "File open failed";
-    Serial.println(error);
-    showError(error);
-    for (;;);
+  if (!SD.exists("/data_log.csv")) {
+    logFile = SD.open("/data_log.csv", FILE_WRITE);
+    if (logFile) {
+      logFile.println("Date,Time,Temperature_F,Temperature_C,Humidity");
+      logFile.close();
+    } else {
+      const char* error = "File creation failed";
+      Serial.println(error);
+      showError(error);
+      for (;;);
+    }
   }
-  logFile.println("Time, Temperature (F), Temperature (C), Humidity (%)");
-  logFile.close();
 
   // Connect to Wi-Fi
   Serial.print("Connecting to Wi-Fi");
@@ -173,9 +176,9 @@ void loop() {
   // Log data to SD card if logInterval has passed
   unsigned long currentMillis = millis();
   if (currentMillis - lastLogTime >= logInterval) {
-    logFile = SD.open("/data_log.txt", FILE_APPEND);
+    logFile = SD.open("/data_log.csv", FILE_APPEND);
     if (logFile) {
-      logFile.printf("%,s %s, %.2f, %.2f, %.2f\n", dateStr, timeStr, temperatureF, temperatureC, humidity);
+      logFile.printf("%s,%s,%.2f,%.2f,%.2f\n", dateStr, timeStr, temperatureF, temperatureC, humidity);
       logFile.close();
     } else {
       Serial.println("Failed to write to file");
