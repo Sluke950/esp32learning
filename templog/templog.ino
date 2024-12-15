@@ -6,6 +6,7 @@
 #include "DHT.h"
 #include <SPI.h>
 #include <SD.h>
+#include <WebServer.h>
 
 // OLED display configuration
 #define SCREEN_WIDTH 128
@@ -36,6 +37,9 @@ File logFile;
 unsigned long logInterval = 1000*60*5; //5 minutes
 unsigned long lastLogTime = 0;
 
+// Web server instance
+WebServer server(80);
+
 void displayMessage(const char* message) {
   display.clearDisplay();
   display.setTextSize(1);
@@ -65,6 +69,42 @@ void showError(const char* errorMessage) {
   display.print(errorMessage);
   display.display();
 }
+
+void handleFileRequest() {
+  String path = server.uri();
+  Serial.print("Requested path: ");
+  Serial.println(path);
+
+  if (path == "/") {
+    path = "/index.html";
+  }
+
+  if (!SD.exists(path)) {
+    Serial.println("File not found on SD card");
+    server.send(404, "text/plain", "File Not Found");
+    return;
+  }
+
+  File file = SD.open(path, FILE_READ);
+  if (!file) {
+    Serial.println("Failed to open file");
+    server.send(500, "text/plain", "Failed to open file");
+    return;
+  }
+
+  String contentType = "text/plain";
+  if (path.endsWith(".html")) contentType = "text/html";
+  else if (path.endsWith(".css")) contentType = "text/css";
+  else if (path.endsWith(".js")) contentType = "application/javascript";
+  else if (path.endsWith(".png")) contentType = "image/png";
+  else if (path.endsWith(".jpg")) contentType = "image/jpeg";
+  else if (path.endsWith(".ico")) contentType = "image/x-icon";
+
+  server.streamFile(file, contentType);
+  file.close();
+  Serial.println("File served successfully");
+}
+
 
 void setup() {
   Serial.begin(115200);
@@ -127,9 +167,22 @@ void setup() {
 
   // Configure NTP
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+  // Setup web server
+  server.onNotFound(handleFileRequest);
+  server.begin();
+  Serial.println("Web server started.");
+
+  server.on("/test", []() {
+  server.send(200, "text/plain", "Web server is working!");
+});
+
 }
 
 void loop() {
+  // Handle web server
+  server.handleClient();
+
   // Get current time
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo)) {
