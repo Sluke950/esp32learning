@@ -14,8 +14,8 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Wi-Fi credentials
-const char* ssid = "YourWiFiSSID";
-const char* password = "YourWiFiPassword";
+const char* ssid = "shuttleworth_reliable";
+const char* password = "Password$1";
 
 // NTP server configuration
 const char* ntpServer = "pool.ntp.org";
@@ -28,9 +28,13 @@ const int daylightOffset_sec = 3600;
 DHT dht(DHTPIN, DHTTYPE);
 
 // SD Card configuration
-#define SD_CS 12  // Chip Select pin for SD card module
+#define SD_CS 5  // Chip Select pin for SD card module
 
 File logFile;
+
+// Log interval in milliseconds (e.g., 5000 ms = 5 seconds)
+unsigned long logInterval = 30000;
+unsigned long lastLogTime = 0;
 
 void displayMessage(const char* message) {
   display.clearDisplay();
@@ -166,15 +170,19 @@ void loop() {
   display.printf("%.1f %%", humidity);
   display.display();
 
-  // Log data to SD card
-  logFile = SD.open("/data_log.txt", FILE_APPEND);
-  if (logFile) {
-    logFile.printf("%s %s, %.1f, %.1f, %.1f\n", dateStr, timeStr, temperatureF, temperatureC, humidity);
-    logFile.close();
-  } else {
-    Serial.println("Failed to write to file");
+  // Log data to SD card if logInterval has passed
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastLogTime >= logInterval) {
+    logFile = SD.open("/data_log.txt", FILE_APPEND);
+    if (logFile) {
+      logFile.printf("%s %s, %.1f, %.1f, %.1f\n", dateStr, timeStr, temperatureF, temperatureC, humidity);
+      logFile.close();
+    } else {
+      Serial.println("Failed to write to file");
+    }
+    lastLogTime = currentMillis;  // Update last log time
   }
 
-  // Delay before next reading
+  // Delay before next reading (not the same as logInterval)
   delay(1000);
 }
