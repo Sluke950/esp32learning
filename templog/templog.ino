@@ -165,9 +165,9 @@ void loop() {
   display.setCursor(0, 0);
   display.printf("%s %s", dateStr, timeStr);
   display.setCursor(0, 10);
-  display.printf("%.1f F %.1f C", temperatureF, temperatureC);
+  display.printf("%.2f F %.2f C", temperatureF, temperatureC);
   display.setCursor(0, 20);
-  display.printf("%.1f %%", humidity);
+  display.printf("%.2f %%", humidity);
   display.display();
 
   // Log data to SD card if logInterval has passed
@@ -175,7 +175,7 @@ void loop() {
   if (currentMillis - lastLogTime >= logInterval) {
     logFile = SD.open("/data_log.txt", FILE_APPEND);
     if (logFile) {
-      logFile.printf("%s %s, %.1f, %.1f, %.1f\n", dateStr, timeStr, temperatureF, temperatureC, humidity);
+      logFile.printf("%,s %s, %.2f, %.2f, %.2f\n", dateStr, timeStr, temperatureF, temperatureC, humidity);
       logFile.close();
     } else {
       Serial.println("Failed to write to file");
