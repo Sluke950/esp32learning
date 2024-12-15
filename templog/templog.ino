@@ -171,6 +171,8 @@ void loop() {
   display.printf("%.2f F %.2f C", temperatureF, temperatureC);
   display.setCursor(0, 20);
   display.printf("%.2f %%", humidity);
+  display.setCursor(0, 40);
+  display.printf("IP: %s", WiFi.localIP().toString().c_str());
   display.display();
 
   // Log data to SD card if logInterval has passed
