@@ -105,6 +105,25 @@ void handleFileRequest() {
   Serial.println("File served successfully");
 }
 
+// Endpoint for current readings
+void handleReadingsRequest() {
+  // Get temperature and humidity
+  float temperatureC = dht.readTemperature();
+  float temperatureF = dht.readTemperature(true);
+  float humidity = dht.readHumidity();
+
+  // Check for reading failure
+  if (isnan(temperatureC) || isnan(temperatureF) || isnan(humidity)) {
+    server.send(500, "text/plain", "Failed to read from DHT sensor");
+    return;
+  }
+
+  // Format and send response
+  String response = "Temperature: " + String(temperatureF) + " F (" + String(temperatureC) + " C)\n";
+  response += "Humidity: " + String(humidity) + "%";
+  
+  server.send(200, "text/plain", response);
+}
 
 void setup() {
   Serial.begin(115200);
@@ -170,13 +189,15 @@ void setup() {
 
   // Setup web server
   server.onNotFound(handleFileRequest);
+  server.on("/test", []() {
+    server.send(200, "text/plain", "Web server is working!");
+  });
+
+  // New endpoint for current readings
+  server.on("/readings", HTTP_GET, handleReadingsRequest);
+
   server.begin();
   Serial.println("Web server started.");
-
-  server.on("/test", []() {
-  server.send(200, "text/plain", "Web server is working!");
-});
-
 }
 
 void loop() {
